@@ -89,6 +89,24 @@ def notes_create():
 
     return flask.redirect(flask.url_for("index"))
 
+@app.route("/notes/edit/<int:note_id>", methods=["GET", "POST"])
+def notes_edit(note_id):
+    db = models.db
+    note = db.session.execute(
+        db.select(models.Note).where(models.Note.id == note_id)
+    ).scalars().first()
+
+    if not note:
+        flask.flash("Note not found!", "error")
+        return flask.redirect(flask.url_for("index"))
+
+    form = forms.NoteForm(obj=note)
+
+    return flask.render_template("notes-edit.html", form=form)
+
+
+
+
 @app.route("/notes/delete/<int:note_id>", methods=["POST"])
 def notes_delete(note_id):
     db = models.db
@@ -103,6 +121,49 @@ def notes_delete(note_id):
         flask.flash("Note not found!", "error")
     return flask.redirect(flask.url_for("index"))
 
+@app.route("/tags/edit/<int:tag_id>", methods=["GET", "POST"])
+def tags_edit(tag_id):
+    db = models.db
+    tag = db.session.execute(
+        db.select(models.Tag).where(models.Tag.id == tag_id)
+    ).scalars().first()
+
+    if not tag:
+        flask.flash("Tag not found!", "error")
+        return flask.redirect(flask.url_for("tags_view_all"))
+
+    if flask.request.method == "POST":
+        tag_name = flask.request.form.get("tag_name").strip()
+        if tag_name:
+            tag.name = tag_name
+            db.session.commit()
+            flask.flash("Tag updated successfully!", "success")
+            return flask.redirect(flask.url_for("tags_view_all"))
+
+    notes = db.session.execute(
+        db.select(models.Note).join(models.Note.tags).where(models.Tag.id == tag_id)
+    ).scalars().all()
+
+    return flask.render_template("tags-view.html", tag=tag, notes=notes)
+
+@app.route("/note/remove_tag/<int:note_id>/<int:tag_id>", methods=["POST"])
+def note_remove_tag(note_id, tag_id):
+    db = models.db
+    note = db.session.execute(
+        db.select(models.Note).where(models.Note.id == note_id)
+    ).scalars().first()
+
+    tag = db.session.execute(
+        db.select(models.Tag).where(models.Tag.id == tag_id)
+    ).scalars().first()
+
+    if note and tag:
+        note.tags.remove(tag)
+        db.session.commit()
+        flask.flash("Tag removed from note!", "success")
+
+    return flask.redirect(flask.url_for("tags_view", tag_name=tag.name))
+
 
 @app.route("/tags/<tag_name>")
 def tags_view(tag_name):
@@ -112,12 +173,17 @@ def tags_view(tag_name):
         .scalars()
         .first()
     )
+    if not tag:
+        flask.flash("Tag not found!", "error")
+        return flask.redirect(flask.url_for("tags_view_all"))
+    
     notes = db.session.execute(
         db.select(models.Note).where(models.Note.tags.any(id=tag.id))
     ).scalars()
 
     return flask.render_template(
         "tags-view.html",
+        tag=tag,
         tag_name=tag_name,
         notes=notes,
     )

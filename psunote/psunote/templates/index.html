@@ -10,9 +10,12 @@
 <div class="card my-3">
   <div class="card-body">
     <h4 class="card-title">{{ note.title }}</h4>
-    <form action="{{ url_for('notes_delete', note_id=note.id) }}" method="POST" style="display:inline;">
-      <button type="submit" class="btn btn-danger">Delete</button>
+    <form action="{{ url_for('notes_edit', note_id=note.id) }}" method="POST" style="display:inline;">
+      <button type="submit" class="btn btn-primary">Edit</button>
   </form>
+  <form action="{{ url_for('notes_delete', note_id=note.id) }}" method="POST" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Delete</button>
+</form>
   
     <div class="card-text my-3">
       {{ note.description }}
