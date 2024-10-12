@@ -3,12 +3,17 @@
 <ul class="nav justify-content-center" style="padding-top: 1em;">
   <li class="nav-item">
     <a class="btn btn-primary" href="{{ url_for('notes_create') }}">Create</a>
+    <a class="btn btn-primary" href="{{ url_for('tags_view_all') }}">Tag</a>
   </li>
 </ul>
 {% for note in notes %}
 <div class="card my-3">
   <div class="card-body">
     <h4 class="card-title">{{ note.title }}</h4>
+    <form action="{{ url_for('notes_delete', note_id=note.id) }}" method="POST" style="display:inline;">
+      <button type="submit" class="btn btn-danger">Delete</button>
+  </form>
+  
     <div class="card-text my-3">
       {{ note.description }}
     </div>

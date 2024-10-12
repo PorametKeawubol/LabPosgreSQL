@@ -24,6 +24,38 @@ def index():
         notes=notes,
     )
 
+@app.route("/tags")
+def tags_view_all():
+    db = models.db
+    tags = db.session.execute(db.select(models.Tag)).scalars()
+    return flask.render_template(
+        "tags-view-all.html",
+        tags=tags,
+    )
+
+@app.route("/tags/delete/<int:tag_id>", methods=["POST"])
+def tags_delete(tag_id):
+    db = models.db
+    tag = db.session.execute( 
+        db.select(models.Tag).where(models.Tag.id == tag_id)
+    ).scalars().first()
+    
+    if tag:
+        notes_with_tag = db.session.execute(
+            db.select(models.Note).where(models.Note.tags.any(id=tag.id))
+        ).scalars().all()
+
+        for note in notes_with_tag:
+            note.tags.remove(tag)
+
+        db.session.delete(tag)
+        db.session.commit()
+        flask.flash("ลบได้นะ", "success")
+    else:
+        flask.flash("Tag not found!", "error")
+
+    return flask.redirect(flask.url_for('tags_view_all'))
+
 
 @app.route("/notes/create", methods=["GET", "POST"])
 def notes_create():
@@ -55,6 +87,20 @@ def notes_create():
     db.session.add(note)
     db.session.commit()
 
+    return flask.redirect(flask.url_for("index"))
+
+@app.route("/notes/delete/<int:note_id>", methods=["POST"])
+def notes_delete(note_id):
+    db = models.db
+    note = db.session.execute(
+        db.select(models.Note).where(models.Note.id == note_id)
+    ).scalars().first()
+    if note:
+        db.session.delete(note)
+        db.session.commit()
+        flask.flash("ลบได้นะ", "success")
+    else:
+        flask.flash("Note not found!", "error")
     return flask.redirect(flask.url_for("index"))
 
 

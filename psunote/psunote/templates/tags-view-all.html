@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block body %}
+<ul class="nav justify-content-center" style="padding-top: 1em;">
+  <li class="nav-item">
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Home</a>
+  </li>
+</ul>
+
+{% for tag in tags %}
+<div class="card my-3">
+  <div class="card-body">
+    <h4 class="card-title">
+        <a href="{{ url_for('tags_view', tag_name=tag.name) }}">{{ tag.name }}</a>
+    </h4>
+    <form action="{{ url_for('tags_delete', tag_id=tag.id) }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
