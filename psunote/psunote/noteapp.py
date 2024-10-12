@@ -112,6 +112,7 @@ def notes_edit(note_id):
 
         note.title = form.title.data
         note.description = form.description.data
+        note.updated_date = db.func.now()
 
         note.tags = []  
         for tag_name in form.tags.data:
