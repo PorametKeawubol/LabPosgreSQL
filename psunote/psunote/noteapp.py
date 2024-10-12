@@ -65,6 +65,8 @@ def notes_create():
         return flask.render_template(
             "notes-create.html",
             form=form,
+            title="Create Note",
+            submit_text="Create"
         )
     note = models.Note()
     form.populate_obj(note)
@@ -100,9 +102,42 @@ def notes_edit(note_id):
         flask.flash("Note not found!", "error")
         return flask.redirect(flask.url_for("index"))
 
-    form = forms.NoteForm(obj=note)
+    
+    form = forms.NoteForm(
+        obj=note,
+        tags=[tag.name for tag in note.tags]  
+    )
 
-    return flask.render_template("notes-edit.html", form=form)
+    if form.validate_on_submit():
+
+        note.title = form.title.data
+        note.description = form.description.data
+
+        note.tags = []  
+        for tag_name in form.tags.data:
+            if isinstance(tag_name, str):
+                tag = (
+                    db.session.execute(db.select(models.Tag).where(models.Tag.name == tag_name))
+                    .scalars()
+                    .first()
+                )
+                if not tag:
+                    tag = models.Tag(name=tag_name)
+                    db.session.add(tag)
+                note.tags.append(tag)  
+
+        db.session.commit()
+        flask.flash("Note updated successfully!", "success")
+        return flask.redirect(flask.url_for("index"))
+
+    return flask.render_template(
+        "notes-create.html",  
+        form=form,
+        title="Edit Note",         
+        submit_text="Edit"       
+    )
+    
+
 
 
 
